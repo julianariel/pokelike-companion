@@ -13,7 +13,7 @@ Users can download the zip, extract it, and load the extracted folder as an unpa
 
 ## Branch Protection
 
-Target policy for `main`:
+Active policy for `main`:
 
 - Require pull requests.
 - Require 1 approving review.
@@ -25,11 +25,11 @@ Target policy for `main`:
 - Block force pushes and deletion.
 - Delete branches after merge.
 
-The repo is already configured to delete branches after merge, disable wiki/projects, and keep issues enabled.
+The repo is configured to delete branches after merge, disable wiki/projects, and keep issues enabled.
 
 Available repository-level settings already applied:
 
-- Private repository.
+- Public repository.
 - Default branch: `main`.
 - Issues enabled.
 - Wiki disabled.
@@ -39,16 +39,6 @@ Available repository-level settings already applied:
 - Merge commits disabled.
 - Rebase merges disabled.
 - Security policy present.
-
-### Current GitHub Limitation
-
-GitHub rejected reading or writing classic branch protection and rejected repository rulesets for this private personal repository:
-
-```text
-Upgrade to GitHub Pro or make this repository public to enable this feature.
-```
-
-The protection can be applied once the account/repo supports protected private branches.
 
 Classic branch protection command:
 

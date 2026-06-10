@@ -1,6 +1,7 @@
 import {
   Activity,
   AlertTriangle,
+  Brain,
   CircleHelp,
   Compass,
   Crosshair,
@@ -20,6 +21,7 @@ import { recommend } from '../core/strategy';
 import { POKEMON_TYPES, summarizeAttackType, type PokemonType } from '../core/typeChart';
 import type { GameSnapshot, RawPokelikeState, Recommendation } from '../core/types';
 import { readPokelikeStateFromActiveTab } from './chromeState';
+import { getLearningStats, recordLearningSnapshot, type LearningStats } from './learningStore';
 import './popup.css';
 
 type LoadState =
@@ -276,6 +278,36 @@ function Recommendations({
   );
 }
 
+function LearningPanel({ stats }: { stats: LearningStats | null }) {
+  if (!stats) {
+    return <div className="empty pixel-panel">Learning log is warming up.</div>;
+  }
+
+  return (
+    <div className="learning-panel pixel-panel">
+      <div className="learning-grid">
+        <StatTile label="Samples" value={stats.samples} title="Deduplicated recommendation states saved locally." />
+        <StatTile label="Outcomes" value={stats.outcomes} title="Detected win/loss screens saved locally." />
+        <StatTile label="Win Rate" value={stats.winRate === null ? '-' : `${stats.winRate}%`} title="Calculated only from detected win/loss screens." />
+        <StatTile label="Last" value={stats.lastOutcome ?? 'none'} title="Most recent detected outcome." />
+      </div>
+      <div className="learning-note">
+        <Brain size={14} />
+        <span>Local only. This history stays in Chrome extension storage and is used to tune future advice.</span>
+      </div>
+      {stats.topNextMoves.length ? (
+        <ul className="learning-moves">
+          {stats.topNextMoves.map((move) => (
+            <li key={move.label}>
+              {move.label} <span>{move.count}x</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function TraitPanel({ snapshot }: { snapshot: GameSnapshot }) {
   if (snapshot.mode !== 'battle-tower') {
     return (
@@ -310,12 +342,14 @@ function AdvisorTab({
   nextMoveRecommendations,
   mapPlanRecommendations,
   alertRecommendations,
+  learningStats,
 }: {
   snapshot: GameSnapshot;
   actionRecommendations: Recommendation[];
   nextMoveRecommendations: Recommendation[];
   mapPlanRecommendations: Recommendation[];
   alertRecommendations: Recommendation[];
+  learningStats: LearningStats | null;
 }) {
   return (
     <>
@@ -357,6 +391,14 @@ function AdvisorTab({
           help="General team, setup, parser, and risk warnings that may affect the next choice."
         />
         <Recommendations recommendations={alertRecommendations} emptyText="No urgent run notes." />
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title="Learning Log"
+          help="Local history of recommendation states and detected run outcomes. This is the base for future win-rate tuning."
+        />
+        <LearningPanel stats={learningStats} />
       </section>
     </>
   );
@@ -457,6 +499,7 @@ export function Popup() {
   const [refreshCount, setRefreshCount] = useState(0);
   const [activeTab, setActiveTab] = useState<TabKey>('advisor');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [learningStats, setLearningStats] = useState<LearningStats | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -497,6 +540,20 @@ export function Popup() {
   const mapPlanRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'map');
   const traitRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'trait');
   const alertRecommendations = recommendations.filter((recommendation) => ['risk', 'setup', 'team', 'state'].includes(recommendation.kind));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function updateLearning() {
+      const stats = snapshot ? await recordLearningSnapshot(snapshot, recommendations) : await getLearningStats();
+      if (!cancelled) setLearningStats(stats);
+    }
+
+    void updateLearning();
+    return () => {
+      cancelled = true;
+    };
+  }, [snapshot, recommendations]);
 
   return (
     <main className="shell">
@@ -564,6 +621,7 @@ export function Popup() {
           mapPlanRecommendations={mapPlanRecommendations}
           actionRecommendations={actionRecommendations}
           alertRecommendations={alertRecommendations}
+          learningStats={learningStats}
         />
       )}
       {snapshot && activeTab === 'team' && <TeamTab snapshot={snapshot} traitRecommendations={traitRecommendations} />}
