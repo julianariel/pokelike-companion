@@ -8,6 +8,7 @@ import {
   Download,
   HeartPulse,
   Map as MapIcon,
+  Music,
   RefreshCw,
   Route,
   Shield,
@@ -16,14 +17,19 @@ import {
   Table2,
   Trash2,
   Users,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { getBossScout, type BossScout } from '../core/bossScout';
+import { getItemHints, type ItemHint } from '../core/itemGuidance';
 import { parsePokelikeState } from '../core/parseState';
 import { recommend } from '../core/strategy';
 import { POKEMON_TYPES, summarizeAttackType, type PokemonType } from '../core/typeChart';
 import type { GameSnapshot, RawPokelikeState, Recommendation } from '../core/types';
 import { readPokelikeStateFromActiveTab } from './chromeState';
 import { clearLearningEvents, getLearningEvents, getLearningStats, recordLearningSnapshot, type LearningStats } from './learningStore';
+import { companionMusic, getMusicLabel, type MusicMood } from './musicEngine';
 import './popup.css';
 
 type LoadState =
@@ -83,6 +89,8 @@ const NODE_LABELS: Record<string, string> = {
   silver: 'Silver',
 };
 
+const MUSIC_VOLUME_KEY = 'pokelike-companion.music-volume';
+
 function modeLabel(snapshot: GameSnapshot): string {
   if (snapshot.mode === 'battle-tower') {
     const stage = snapshot.endless?.stageNumber ? ` Stage ${snapshot.endless.stageNumber}` : '';
@@ -132,6 +140,22 @@ function StatTile({ label, value, title }: { label: string; value: string | numb
 
 function TypePill({ type }: { type: string }) {
   return <span className={`type-pill type-${type.toLowerCase()}`}>{type}</span>;
+}
+
+function readStoredVolume(): number {
+  const stored = Number(window.localStorage.getItem(MUSIC_VOLUME_KEY));
+  return Number.isFinite(stored) ? Math.max(0, Math.min(0.5, stored)) : 0.16;
+}
+
+function detectMusicMood(snapshot: GameSnapshot | null): MusicMood {
+  const screen = `${snapshot?.actionScreen?.id ?? ''} ${snapshot?.actionScreen?.title ?? ''} ${snapshot?.actionScreen?.prompt ?? ''}`.toLowerCase();
+  const lowHp = Boolean(snapshot?.team.length && snapshot.team.some((pokemon) => pokemon.currentHp > 0 && pokemon.hpRatio <= 0.22));
+  if (screen.includes('game over') || screen.includes('loss') || lowHp) return 'danger';
+  if (screen.includes('champion') || screen.includes('victory') || screen.includes('badge earned') || screen.includes('win')) return 'victory';
+  if (screen.includes('evol')) return 'evolution';
+  if (screen.includes('battle')) return 'battle';
+  if (screen.includes('catch') || screen.includes('encounter')) return 'encounter';
+  return 'map';
 }
 
 function TeamList({ snapshot }: { snapshot: GameSnapshot }) {
@@ -338,6 +362,45 @@ function LearningPanel({
   );
 }
 
+function MusicPanel({
+  mood,
+  enabled,
+  volume,
+  onToggle,
+  onVolumeChange,
+}: {
+  mood: MusicMood;
+  enabled: boolean;
+  volume: number;
+  onToggle: () => void;
+  onVolumeChange: (volume: number) => void;
+}) {
+  return (
+    <div className="music-panel pixel-panel">
+      <div className="music-panel-main">
+        <Music size={15} />
+        <div>
+          <strong>{getMusicLabel(mood)}</strong>
+          <span>{enabled ? 'Playing original companion loop' : 'Click to start music'}</span>
+        </div>
+      </div>
+      <div className="music-controls">
+        <button className={enabled ? 'icon-button icon-button--active' : 'icon-button'} type="button" onClick={onToggle} title={enabled ? 'Stop companion music' : 'Start companion music'}>
+          {enabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+        </button>
+        <input
+          aria-label="Music volume"
+          min="0"
+          max="50"
+          type="range"
+          value={Math.round(volume * 100)}
+          onChange={(event) => onVolumeChange(Number(event.target.value) / 100)}
+        />
+      </div>
+    </div>
+  );
+}
+
 function TraitPanel({ snapshot }: { snapshot: GameSnapshot }) {
   if (snapshot.mode !== 'battle-tower') {
     return (
@@ -360,6 +423,62 @@ function TraitPanel({ snapshot }: { snapshot: GameSnapshot }) {
             {trait.tier > 0 ? `Tier ${trait.tier}` : 'inactive'} · {trait.count}
             {trait.nextThreshold ? `/${trait.nextThreshold}` : ''}
           </span>
+          {trait.role ? <em>{trait.role}</em> : null}
+          {trait.description ? <p>{trait.description}</p> : trait.nextDescription ? <p>Next: {trait.nextDescription}</p> : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function BossScoutPanel({ scout }: { scout: BossScout | null }) {
+  if (!scout) {
+    return <div className="empty pixel-panel">Boss scout appears once a live team and mode are detected.</div>;
+  }
+
+  return (
+    <div className="boss-scout pixel-panel">
+      <div className="boss-scout-head">
+        <div>
+          <strong>{scout.name}</strong>
+          <span>
+            {scout.type} · Lv{scout.level}
+          </span>
+        </div>
+        <Shield size={18} />
+      </div>
+      {scout.goodAttackTypes.length ? (
+        <div className="type-row">
+          {scout.goodAttackTypes.map((type) => (
+            <TypePill type={type} key={type} />
+          ))}
+        </div>
+      ) : (
+        <p>Mixed boss: prioritize broad coverage and your highest-level healthy lead.</p>
+      )}
+      <p>{scout.warning}</p>
+      {scout.teamAnswers.length ? <p>Current answers: {scout.teamAnswers.join(', ')}.</p> : <p>No obvious super-effective answer on the active team.</p>}
+    </div>
+  );
+}
+
+function ItemGuidancePanel({ hints }: { hints: ItemHint[] }) {
+  if (!hints.length) {
+    return <div className="empty pixel-panel">No carried or held items found yet.</div>;
+  }
+
+  return (
+    <div className="item-hints">
+      {hints.map((hint) => (
+        <div className={`item-hint pixel-panel item-hint--${hint.priority}`} key={`${hint.item}-${hint.role}`}>
+          <div className="item-hint-head">
+            <strong>{hint.item}</strong>
+            <span>{hint.role}</span>
+          </div>
+          <p>
+            Target: <b>{hint.target}</b>
+          </p>
+          <p>{hint.detail}</p>
         </div>
       ))}
     </div>
@@ -368,6 +487,7 @@ function TraitPanel({ snapshot }: { snapshot: GameSnapshot }) {
 
 function AdvisorTab({
   snapshot,
+  bossScout,
   actionRecommendations,
   nextMoveRecommendations,
   mapPlanRecommendations,
@@ -377,6 +497,7 @@ function AdvisorTab({
   onClearLearning,
 }: {
   snapshot: GameSnapshot;
+  bossScout: BossScout | null;
   actionRecommendations: Recommendation[];
   nextMoveRecommendations: Recommendation[];
   mapPlanRecommendations: Recommendation[];
@@ -421,6 +542,14 @@ function AdvisorTab({
 
       <section className="panel">
         <SectionHeader
+          title="Next Boss Scout"
+          help="Looks at the current mode and map to preview the next major fight, useful attack types, and current team answers."
+        />
+        <BossScoutPanel scout={bossScout} />
+      </section>
+
+      <section className="panel">
+        <SectionHeader
           title="Run Notes"
           help="General team, setup, parser, and risk warnings that may affect the next choice."
         />
@@ -438,7 +567,15 @@ function AdvisorTab({
   );
 }
 
-function TeamTab({ snapshot, traitRecommendations }: { snapshot: GameSnapshot; traitRecommendations: Recommendation[] }) {
+function TeamTab({
+  snapshot,
+  traitRecommendations,
+  itemHints,
+}: {
+  snapshot: GameSnapshot;
+  traitRecommendations: Recommendation[];
+  itemHints: ItemHint[];
+}) {
   return (
     <>
       <section className="panel">
@@ -453,6 +590,14 @@ function TeamTab({ snapshot, traitRecommendations }: { snapshot: GameSnapshot; t
         <SectionHeader title="Battle Tower Traits" help="Type traits activate at 2 matching counts and upgrade at 4 and 6." />
         <TraitPanel snapshot={snapshot} />
         <Recommendations recommendations={traitRecommendations} emptyText="No trait advice yet." />
+      </section>
+
+      <section className="panel">
+        <SectionHeader
+          title="Item Roles"
+          help="Matches carried and held items to practical roles: scaling, damage, sustain, survival tech, and type boosts."
+        />
+        <ItemGuidancePanel hints={itemHints} />
       </section>
     </>
   );
@@ -534,6 +679,8 @@ export function Popup() {
   const [activeTab, setActiveTab] = useState<TabKey>('advisor');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [learningStats, setLearningStats] = useState<LearningStats | null>(null);
+  const [musicEnabled, setMusicEnabled] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(readStoredVolume);
 
   useEffect(() => {
     let cancelled = false;
@@ -569,11 +716,23 @@ export function Popup() {
   }, [loadState]);
 
   const recommendations = useMemo(() => (snapshot ? recommend(snapshot) : []), [snapshot]);
+  const musicMood = useMemo(() => detectMusicMood(snapshot), [snapshot]);
+  const bossScout = useMemo(() => (snapshot ? getBossScout(snapshot) : null), [snapshot]);
+  const itemHints = useMemo(() => (snapshot ? getItemHints(snapshot) : []), [snapshot]);
   const actionRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'action');
   const nextMoveRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'path');
   const mapPlanRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'map');
   const traitRecommendations = recommendations.filter((recommendation) => recommendation.kind === 'trait');
   const alertRecommendations = recommendations.filter((recommendation) => ['risk', 'setup', 'team', 'state'].includes(recommendation.kind));
+
+  useEffect(() => {
+    companionMusic.setMood(musicMood);
+    companionMusic.setVolume(musicVolume);
+  }, [musicMood, musicVolume]);
+
+  useEffect(() => {
+    return () => companionMusic.stop();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -600,6 +759,28 @@ export function Popup() {
 
   async function handleClearLearning() {
     setLearningStats(await clearLearningEvents());
+  }
+
+  async function handleMusicToggle() {
+    if (musicEnabled) {
+      companionMusic.stop();
+      setMusicEnabled(false);
+      return;
+    }
+
+    setMusicEnabled(true);
+    try {
+      await companionMusic.start();
+    } catch {
+      companionMusic.stop();
+      setMusicEnabled(false);
+    }
+  }
+
+  function handleVolumeChange(volume: number) {
+    setMusicVolume(volume);
+    companionMusic.setVolume(volume);
+    window.localStorage.setItem(MUSIC_VOLUME_KEY, String(volume));
   }
 
   return (
@@ -630,6 +811,14 @@ export function Popup() {
         </button>
         <span>{snapshot?.actionScreen?.title || snapshot?.actionScreen?.id?.replace(/-/g, ' ') || 'Watching active tab'}</span>
       </div>
+
+      <MusicPanel
+        mood={musicMood}
+        enabled={musicEnabled}
+        volume={musicVolume}
+        onToggle={handleMusicToggle}
+        onVolumeChange={handleVolumeChange}
+      />
 
       {snapshot && (
         <section className="summary">
@@ -664,6 +853,7 @@ export function Popup() {
       {snapshot && activeTab === 'advisor' && (
         <AdvisorTab
           snapshot={snapshot}
+          bossScout={bossScout}
           nextMoveRecommendations={nextMoveRecommendations}
           mapPlanRecommendations={mapPlanRecommendations}
           actionRecommendations={actionRecommendations}
@@ -673,7 +863,7 @@ export function Popup() {
           onClearLearning={handleClearLearning}
         />
       )}
-      {snapshot && activeTab === 'team' && <TeamTab snapshot={snapshot} traitRecommendations={traitRecommendations} />}
+      {snapshot && activeTab === 'team' && <TeamTab snapshot={snapshot} traitRecommendations={traitRecommendations} itemHints={itemHints} />}
       {activeTab === 'types' && <TypeChartTab />}
       {activeTab === 'guide' && <GuideTab />}
     </main>

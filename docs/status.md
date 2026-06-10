@@ -104,6 +104,9 @@ Status: complete
 ### Verification
 
 - `npm run build` passed.
+- `npm run package` passed.
+- Local Vite smoke test loaded the side-panel UI with no browser console errors.
+- Music toggle changed to the playing state after a user click in the browser smoke test.
 - Generated `dist/manifest.json` includes `side_panel`, `background.service_worker`, and `sidePanel` permission.
 - Generated `dist/` includes `background.js`, `content-script.js`, `index.html`, popup JS, and CSS assets.
 
@@ -242,3 +245,18 @@ Status: in review
 - `npm run build` passed.
 - `npm run package` passed.
 - Release workflow YAML parsed successfully.
+
+### Milestone: Research-Backed Companion Features
+
+Status: in review
+
+- Researched live game behavior, public game scripts, and the community guide for Battle Tower traits, item value, team order, and boss preparation.
+- Added optional original WebAudio companion music that adapts to map, battle, encounter, evolution, victory, and danger contexts.
+- Added Battle Tower trait effect descriptions, roles, and next-tier previews.
+- Added item-role guidance for carried and held items, including scaling, damage, sustain, survival, and type-boost roles.
+- Added a Next Boss Scout panel with boss name, target type/level, useful attack types, current team answers, and level-pace warnings.
+- Documented the four-feature implementation plan in `docs/game-research.md`.
+
+### Verification
+
+- `npm run build` passed.

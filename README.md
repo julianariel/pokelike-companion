@@ -16,8 +16,12 @@ It watches your live run, scores your next choices, and explains the route like 
 - Plans the broader visible route, not only the immediate node.
 - Tracks team health, levels, held items, move tiers, and types.
 - Explains Nuzlocke danger, boss readiness, catch tempo, and healing value.
+- Scouts the next boss with target level, useful attack types, and current team answers.
 - Scores Battle Tower traits, including type-pair tiers and shiny double-counts.
+- Explains active Battle Tower trait effects and next-tier upgrades.
+- Suggests practical item roles and holder targets.
 - Ranks action screens such as catches, items, swaps, trades, stat buffs, and Elite prep.
+- Adds optional original companion music for map, battle, encounter, evolution, victory, and danger moments.
 - Includes a type chart and compact strategy guide.
 - Keeps a local learning log of recommendation samples and detected win/loss outcomes, with JSON export for issue reports.
 
@@ -126,6 +130,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 - [Plan](docs/plan.md)
 - [Architecture](docs/architecture.md)
 - [Strategy Engine](docs/strategy-engine.md)
+- [Game Research And Feature Plan](docs/game-research.md)
 - [Release Process](docs/release.md)
 - [Support Setup](docs/support.md)
 - [Repository Settings](docs/repository-settings.md)
