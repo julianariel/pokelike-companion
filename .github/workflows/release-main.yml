@@ -40,16 +40,49 @@ jobs:
           cd dist
           zip -r ../pokelike-companion-extension.zip .
 
+      - name: Read extension version
+        id: version
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${VERSION}" >> "${GITHUB_OUTPUT}"
+
       - name: Write release notes
         run: |
           {
             echo "Automated build from main."
             echo
+            echo "- Version: ${{ steps.version.outputs.version }}"
             echo "- Commit: ${GITHUB_SHA}"
             echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
             echo
             echo "Install by downloading \`pokelike-companion-extension.zip\`, extracting it, and loading the extracted folder in Chrome as an unpacked extension."
           } > release-notes.md
+
+      - name: Write versioned release notes
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          PREVIOUS_TAG="$(git tag --list 'v*' --sort=-v:refname | grep -v "^${TAG}$" | head -n 1 || true)"
+          {
+            echo "## Install"
+            echo
+            echo "Download \`pokelike-companion-extension.zip\`, extract it, and load the extracted folder in Chrome as an unpacked extension."
+            echo
+            echo "## Release"
+            echo
+            echo "- Version: ${{ steps.version.outputs.version }}"
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "## Changes"
+            echo
+            if [ -n "${PREVIOUS_TAG}" ]; then
+              git log --pretty=format:'- %s (%h)' "${PREVIOUS_TAG}..${GITHUB_SHA}"
+            else
+              git log --pretty=format:'- %s (%h)' "${GITHUB_SHA}"
+            fi
+            echo
+          } > versioned-release-notes.md
 
       - name: Move rolling release tag
         run: |
@@ -73,3 +106,24 @@ jobs:
               --prerelease
           fi
           gh release upload main-latest pokelike-companion-extension.zip --clobber
+
+      - name: Create immutable versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; leaving it unchanged."
+            exit 0
+          fi
+
+          if ! git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            git tag "${TAG}" "${GITHUB_SHA}"
+            git push origin "refs/tags/${TAG}"
+          fi
+
+          gh release create "${TAG}" \
+            pokelike-companion-extension.zip \
+            --title "Pokelike Companion ${TAG}" \
+            --notes-file versioned-release-notes.md \
+            --target "${GITHUB_SHA}"

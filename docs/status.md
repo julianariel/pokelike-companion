@@ -224,3 +224,21 @@ Status: in review
 - `npm run build` passed.
 - `npm run package` passed.
 - Generated `dist/manifest.json` includes the `storage` permission.
+
+### Milestone: Versioned Release Automation
+
+Status: in review
+
+- Kept `main-latest` as the rolling prerelease for the latest install link.
+- Added immutable versioned releases keyed from `package.json`, starting with `v0.2.0`.
+- Added release notes generation from commit history since the previous `v*` tag.
+- Added `npm run version:check` and `npm run version:sync` so the Chrome manifest version stays aligned with `package.json`.
+- Added release process documentation and a PR checklist item for version bumps.
+- Bumped extension version to `0.2.0` so merging this PR creates the first versioned release.
+
+### Verification
+
+- `npm run version:check` passed.
+- `npm run build` passed.
+- `npm run package` passed.
+- Release workflow YAML parsed successfully.
