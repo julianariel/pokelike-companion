@@ -55,6 +55,9 @@ export type TraitTier = {
   count: number;
   tier: number;
   nextThreshold: number | null;
+  description?: string;
+  nextDescription?: string;
+  role?: string;
 };
 
 export type ScreenChoice = {
