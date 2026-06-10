@@ -27,9 +27,22 @@ Target policy for `main`:
 
 The repo is already configured to delete branches after merge, disable wiki/projects, and keep issues enabled.
 
+Available repository-level settings already applied:
+
+- Private repository.
+- Default branch: `main`.
+- Issues enabled.
+- Wiki disabled.
+- Projects disabled.
+- Delete branches after merge enabled.
+- Squash merge enabled.
+- Merge commits disabled.
+- Rebase merges disabled.
+- Security policy present.
+
 ### Current GitHub Limitation
 
-GitHub rejected both classic branch protection and repository rulesets for this private personal repository:
+GitHub rejected reading or writing classic branch protection and rejected repository rulesets for this private personal repository:
 
 ```text
 Upgrade to GitHub Pro or make this repository public to enable this feature.

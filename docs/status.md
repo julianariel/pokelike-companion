@@ -157,7 +157,7 @@ Status: complete
 
 ### Milestone: GitHub Repository And Release Automation
 
-Status: in progress
+Status: complete except hosted branch protection
 
 - Added CI workflow for pull requests and pushes to `main`.
 - Added release workflow that builds and uploads `pokelike-companion-extension.zip` to a rolling `main-latest` prerelease.
@@ -166,11 +166,13 @@ Status: in progress
 - Created private GitHub repo: `julianariel/pokelike-companion`.
 - Pushed initial `main` commit.
 - Configured repo settings: issues enabled, wiki/projects disabled, delete branch on merge enabled.
+- Tightened available merge settings to squash-only merges.
 
 Branch protection note:
 
 - Attempted classic branch protection and repository rulesets for `main`.
 - GitHub rejected both because protected branches/rulesets for this private personal repo require GitHub Pro or a public repo.
+- Rechecked after release automation passed; GitHub still rejected reading protection, writing protection, and creating a ruleset with the same plan limitation.
 - See `docs/repository-settings.md` for the target settings and commands to apply once available.
 
 Verification:
@@ -179,7 +181,8 @@ Verification:
 - Local `npm run package` produced `pokelike-companion-extension.zip`.
 - Remote `CI` workflow passed on initial push.
 - Remote `Release Extension` workflow passed on `main`.
-- Rolling release `main-latest` exists with `pokelike-companion-extension.zip`.
+- Remote `CI` and `Release Extension` passed again for commit `8851de7`.
+- Rolling release `main-latest` exists with `pokelike-companion-extension.zip` generated from commit `8851de7`.
 - GitHub Actions versions were updated to the current Dependabot-recommended majors.
 
 ### Milestone: Advisor UX Polish
