@@ -173,9 +173,30 @@ Branch protection note:
 - GitHub rejected both because protected branches/rulesets for this private personal repo require GitHub Pro or a public repo.
 - See `docs/repository-settings.md` for the target settings and commands to apply once available.
 
-Verification so far:
+Verification:
 
 - Local `npm run build` passed.
 - Local `npm run package` produced `pokelike-companion-extension.zip`.
 - Remote `CI` workflow passed on initial push.
-- Remote `Release Extension` workflow initially failed due GitHub CLI token wiring; workflow has been patched and needs the next push to verify.
+- Remote `Release Extension` workflow passed on `main`.
+- Rolling release `main-latest` exists with `pokelike-companion-extension.zip`.
+- GitHub Actions versions were updated to the current Dependabot-recommended majors.
+
+### Milestone: Advisor UX Polish
+
+Status: complete
+
+- Replaced remaining debug-style map language with lane and reward labels.
+- Added recommendation metadata so route cards can show numbered visible-map steps.
+- Renamed advisor sections for clarity:
+  - Current Decision
+  - Best Next Click
+  - Visible Map Plan
+  - Run Notes
+- Made section explanations visible under each section title instead of relying only on hover tooltips.
+- Added a compact visible-map overview that distinguishes next, planned, future, and visited nodes.
+
+### Verification
+
+- `npm run build` passed.
+- Local Vite smoke test loaded the companion UI with no browser console errors.

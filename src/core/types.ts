@@ -111,4 +111,9 @@ export type Recommendation = {
   score: number;
   severity: 'info' | 'good' | 'warning' | 'danger';
   reasons: string[];
+  meta?: {
+    nodeId?: string;
+    routeNodeIds?: string[];
+    routeLabels?: string[];
+  };
 };

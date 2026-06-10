@@ -5,7 +5,7 @@ import {
   Compass,
   Crosshair,
   HeartPulse,
-  Map,
+  Map as MapIcon,
   RefreshCw,
   Route,
   Shield,
@@ -65,6 +65,20 @@ const GUIDE_SECTIONS = [
   },
 ];
 
+const NODE_LABELS: Record<string, string> = {
+  battle: 'Wild Battle',
+  catch: 'Catch',
+  item: 'Item',
+  question: 'Mystery',
+  boss: 'Boss',
+  pokecenter: 'Pokemon Center',
+  trainer: 'Trainer',
+  legendary: 'Legendary',
+  move_tutor: 'Move Tutor',
+  trade: 'Trade',
+  silver: 'Silver',
+};
+
 function modeLabel(snapshot: GameSnapshot): string {
   if (snapshot.mode === 'battle-tower') {
     const stage = snapshot.endless?.stageNumber ? ` Stage ${snapshot.endless.stageNumber}` : '';
@@ -81,7 +95,7 @@ function severityClass(recommendation: Recommendation): string {
 }
 
 function RecommendationIcon({ recommendation }: { recommendation: Recommendation }) {
-  if (recommendation.kind === 'path') return <Map size={16} />;
+  if (recommendation.kind === 'path') return <MapIcon size={16} />;
   if (recommendation.kind === 'map') return <Route size={16} />;
   if (recommendation.kind === 'trait') return <Sparkles size={16} />;
   if (recommendation.kind === 'risk') return <AlertTriangle size={16} />;
@@ -91,12 +105,15 @@ function RecommendationIcon({ recommendation }: { recommendation: Recommendation
 
 function SectionHeader({ title, help }: { title: string; help: string }) {
   return (
-    <div className="section-header">
-      <div className="panel-title">{title}</div>
-      <span className="info-icon" title={help} aria-label={help}>
-        <CircleHelp size={13} />
-      </span>
-    </div>
+    <header className="section-header">
+      <div className="section-header-main">
+        <div className="panel-title">{title}</div>
+        <span className="info-icon" title={help} aria-label={help}>
+          <CircleHelp size={13} />
+        </span>
+      </div>
+      <p className="section-help">{help}</p>
+    </header>
   );
 }
 
@@ -155,12 +172,87 @@ function RecommendationCard({ recommendation }: { recommendation: Recommendation
         <h3>{recommendation.title}</h3>
       </div>
       <p>{recommendation.detail}</p>
+      {recommendation.meta?.routeLabels?.length ? (
+        <ol className="route-steps" aria-label="Recommended route steps">
+          {recommendation.meta.routeLabels.map((label, index) => (
+            <li key={`${recommendation.id}-${label}`}>
+              <span>{index + 1}</span>
+              {label}
+            </li>
+          ))}
+        </ol>
+      ) : null}
       <ul>
         {recommendation.reasons.map((reason) => (
           <li key={reason}>{reason}</li>
         ))}
       </ul>
     </section>
+  );
+}
+
+function nodeRewardLabel(type: string): string {
+  return NODE_LABELS[type] ?? type.replace(/_/g, ' ');
+}
+
+function nodeLane(snapshot: GameSnapshot, nodeId: string): string {
+  const node = snapshot.mapNodes.find((candidate) => candidate.id === nodeId);
+  if (!node || node.layer === undefined) return '';
+  const peers = snapshot.mapNodes
+    .filter((candidate) => candidate.layer === node.layer)
+    .sort((a, b) => (a.col ?? 0) - (b.col ?? 0) || a.id.localeCompare(b.id));
+  if (peers.length <= 1) return '';
+
+  const index = peers.findIndex((candidate) => candidate.id === nodeId);
+  const labelsBySize: Record<number, string[]> = {
+    2: ['left', 'right'],
+    3: ['left', 'middle', 'right'],
+    4: ['far left', 'left center', 'right center', 'far right'],
+  };
+  return labelsBySize[peers.length]?.[index] ?? `choice ${index + 1}`;
+}
+
+function MapOverview({ snapshot, routeNodeIds = [] }: { snapshot: GameSnapshot; routeNodeIds?: string[] }) {
+  if (!snapshot.mapNodes.length) {
+    return <div className="empty pixel-panel">No visible map nodes found yet.</div>;
+  }
+
+  const routeIds = new Set(routeNodeIds);
+  const accessibleIds = new Set(snapshot.accessibleNodes.map((node) => node.id));
+  const grouped = new Map<number, typeof snapshot.mapNodes>();
+  for (const node of snapshot.mapNodes) {
+    const row = node.layer ?? 0;
+    grouped.set(row, [...(grouped.get(row) ?? []), node]);
+  }
+
+  const rows = [...grouped.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([row, nodes]) => ({
+      row,
+      nodes: [...nodes].sort((a, b) => (a.col ?? 0) - (b.col ?? 0) || a.id.localeCompare(b.id)),
+    }));
+
+  return (
+    <div className="map-overview pixel-panel">
+      {rows.map(({ row, nodes }) => (
+        <div className="map-row" key={row}>
+          <div className="map-row-label">Row {row + 1}</div>
+          <div className="map-node-list">
+            {nodes.map((node) => {
+              const lane = nodeLane(snapshot, node.id);
+              const state = node.visited ? 'visited' : accessibleIds.has(node.id) ? 'next' : routeIds.has(node.id) ? 'planned' : 'future';
+              const className = `map-node map-node--${state}`;
+              return (
+                <span className={className} title={`${nodeRewardLabel(node.type)} ${state}`} key={node.id}>
+                  {lane ? `${lane} ` : ''}
+                  {nodeRewardLabel(node.type)}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -236,7 +328,7 @@ function AdvisorTab({
 
       <section className="panel">
         <SectionHeader
-          title="Current Screen"
+          title="Current Decision"
           help="Advice for non-map decisions like catch choices, item picks, swaps, trades, move tutor, battle prep, and stat buffs."
         />
         <Recommendations recommendations={actionRecommendations} emptyText="No special action-screen advice right now." />
@@ -244,18 +336,19 @@ function AdvisorTab({
 
       <section className="panel">
         <SectionHeader
-          title="Next Move"
-          help="The best immediate clickable node based on health, mode, team size, items, and known reward type."
+          title="Best Next Click"
+          help="The one map node to click now, scored from current health, mode, team size, items, and reward type."
         />
         <Recommendations recommendations={nextMoveRecommendations} emptyText="No clickable map choice found." />
       </section>
 
       <section className="panel">
         <SectionHeader
-          title="Map Plan"
-          help="A route through the currently visible map, scored from the next click through downstream visible rewards."
+          title="Visible Map Plan"
+          help="The broader route through currently visible nodes. It is a plan, not a lock, because battles, catches, and mystery nodes can change the next best choice."
         />
         <Recommendations recommendations={mapPlanRecommendations} emptyText="Map route planning will appear once a run map is visible." />
+        <MapOverview snapshot={snapshot} routeNodeIds={mapPlanRecommendations[0]?.meta?.routeNodeIds} />
       </section>
 
       <section className="panel">

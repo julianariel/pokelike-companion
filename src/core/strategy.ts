@@ -17,16 +17,16 @@ const NODE_LABELS: Record<string, string> = {
 };
 
 const NODE_ACTIONS: Record<string, string> = {
-  battle: 'take the Wild Battle',
-  catch: 'choose the Catch encounter',
-  item: 'pick the Item reward',
-  question: 'take the Mystery node',
-  boss: 'challenge the Boss',
-  pokecenter: 'visit the Pokemon Center',
-  trainer: 'fight the Trainer',
-  legendary: 'challenge the Legendary encounter',
+  battle: 'take a safe leveling fight',
+  catch: 'add a catch option',
+  item: 'pick up an item reward',
+  question: 'take the mystery reward',
+  boss: 'challenge the boss',
+  pokecenter: 'heal at the Pokemon Center',
+  trainer: 'take the trainer fight',
+  legendary: 'challenge the legendary encounter',
   move_tutor: 'visit the Move Tutor',
-  trade: 'consider the Trade',
+  trade: 'check the trade',
   silver: 'fight Silver',
 };
 
@@ -141,12 +141,12 @@ function nodePosition(snapshot: GameSnapshot, node: MapNodeSummary): string {
   if (index < 0) return '';
 
   const labelsBySize: Record<number, string[]> = {
-    2: ['left', 'right'],
-    3: ['left', 'middle', 'right'],
-    4: ['far-left', 'left-center', 'right-center', 'far-right'],
+    2: ['left lane', 'right lane'],
+    3: ['left lane', 'middle lane', 'right lane'],
+    4: ['far-left lane', 'left-center lane', 'right-center lane', 'far-right lane'],
   };
   const labels = labelsBySize[peers.length];
-  return labels?.[index] ?? `slot ${index + 1}`;
+  return labels?.[index] ?? `choice ${index + 1}`;
 }
 
 function nodeReward(node: MapNodeSummary): string {
@@ -156,14 +156,15 @@ function nodeReward(node: MapNodeSummary): string {
 function describeNode(snapshot: GameSnapshot, node: MapNodeSummary, includeLayer = false): string {
   const position = nodePosition(snapshot, node);
   const reward = nodeReward(node);
-  const layer = includeLayer && node.layer !== undefined ? `, row ${node.layer}` : '';
+  const layer = includeLayer && node.layer !== undefined ? `, map row ${node.layer + 1}` : '';
   return `${position ? `${position} ` : ''}${reward}${layer}`;
 }
 
 function describeNodeAction(snapshot: GameSnapshot, node: MapNodeSummary): string {
   const position = nodePosition(snapshot, node);
   const action = NODE_ACTIONS[node.type] ?? `take the ${nodeReward(node)} node`;
-  return `${position ? `${position}: ` : ''}${action}`;
+  const reward = describeNode(snapshot, node);
+  return position ? `${action} from the ${reward}` : action;
 }
 
 function scoreNode(node: MapNodeSummary, snapshot: GameSnapshot): { score: number; reasons: string[] } {
@@ -285,11 +286,19 @@ function bestRouteFrom(node: MapNodeSummary, snapshot: GameSnapshot, memo = new 
 }
 
 function bestVisibleRoute(snapshot: GameSnapshot): RouteScore | null {
-  if (!snapshot.accessibleNodes.length || !snapshot.mapEdges.length) return null;
+  if (!snapshot.accessibleNodes.length) return null;
   const memo = new Map<string, RouteScore>();
   return snapshot.accessibleNodes
     .map((node) => bestRouteFrom(node, snapshot, memo))
     .sort((a, b) => b.score - a.score)[0] ?? null;
+}
+
+function visibleRouteOptions(snapshot: GameSnapshot): RouteScore[] {
+  if (!snapshot.accessibleNodes.length) return [];
+  const memo = new Map<string, RouteScore>();
+  return snapshot.accessibleNodes
+    .map((node) => bestRouteFrom(node, snapshot, memo))
+    .sort((a, b) => b.score - a.score);
 }
 
 function pathRecommendations(snapshot: GameSnapshot): Recommendation[] {
@@ -300,40 +309,57 @@ function pathRecommendations(snapshot: GameSnapshot): Recommendation[] {
     .sort((a, b) => b.score - a.score);
 
   const best = ranked[0];
-  const label = NODE_LABELS[best.node.type] ?? best.node.type;
+  const label = describeNode(snapshot, best.node);
 
   return [
     {
       id: `path-${best.node.id}`,
       kind: 'path',
       title: `Next move: ${label}`,
-      detail: `Choose ${describeNodeAction(snapshot, best.node)}.`,
+      detail: `Click this next because it has the best immediate value from the visible choices.`,
       score: best.score,
       severity: best.score >= 55 ? 'good' : best.score <= 20 ? 'warning' : 'info',
       reasons: best.reasons,
+      meta: {
+        nodeId: best.node.id,
+        routeNodeIds: [best.node.id],
+        routeLabels: [describeNode(snapshot, best.node, true)],
+      },
     },
   ];
 }
 
 function mapPlanRecommendations(snapshot: GameSnapshot): Recommendation[] {
-  const route = bestVisibleRoute(snapshot);
-  if (!route || route.route.length < 2) return [];
+  const options = visibleRouteOptions(snapshot);
+  const route = options[0];
+  if (!route) return [];
 
   const visibleSteps = route.route.slice(0, 6);
-  const routeLabel = visibleSteps.map((node) => describeNode(snapshot, node)).join(' -> ');
+  const routeLabels = visibleSteps.map((node) => describeNode(snapshot, node, true));
+  const hiddenCount = Math.max(0, route.route.length - visibleSteps.length);
+  const routeLabel = `${routeLabels.join(' -> ')}${hiddenCount ? ` -> ${hiddenCount} more visible step${hiddenCount === 1 ? '' : 's'}` : ''}`;
+  const alternateStarts = options
+    .slice(1, 4)
+    .map((option) => `${describeNode(snapshot, option.route[0])}: ${Math.round(option.score)}`);
 
   return [
     {
       id: `map-plan-${route.route.map((node) => node.id).join('-')}`,
       kind: 'map',
-      title: 'Overall visible-map plan',
-      detail: routeLabel,
+      title: 'Best visible route',
+      detail: `Plan across the visible map: ${routeLabel}.`,
       score: route.score,
       severity: 'info',
       reasons: [
         'This looks beyond the next click and follows the strongest visible downstream rewards.',
+        alternateStarts.length ? `Other next starts scored lower: ${alternateStarts.join(' | ')}.` : 'Only one visible start is currently available.',
         'Future catch choices, mystery results, and battle damage can change the plan.',
       ],
+      meta: {
+        nodeId: route.route[0]?.id,
+        routeNodeIds: route.route.map((node) => node.id),
+        routeLabels,
+      },
     },
   ];
 }
