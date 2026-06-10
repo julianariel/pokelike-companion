@@ -58,4 +58,5 @@ That creates `pokelike-companion-extension.zip` from the generated `dist/` folde
 - [Plan](docs/plan.md)
 - [Architecture](docs/architecture.md)
 - [Strategy Engine](docs/strategy-engine.md)
+- [Repository Settings](docs/repository-settings.md)
 - [Status](docs/status.md)

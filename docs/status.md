@@ -154,3 +154,28 @@ Status: complete
 - Replace the rough readiness percentage with a proper battle simulator using Pokelike's damage formula and boss teams.
 - Add exact catch/swap trait delta cards for Battle Tower.
 - Add held-item target scoring using Pokemon move type and stats.
+
+### Milestone: GitHub Repository And Release Automation
+
+Status: in progress
+
+- Added CI workflow for pull requests and pushes to `main`.
+- Added release workflow that builds and uploads `pokelike-companion-extension.zip` to a rolling `main-latest` prerelease.
+- Added Dependabot config for npm and GitHub Actions.
+- Added CODEOWNERS, issue templates, PR template, contributing guide, security policy, and license.
+- Created private GitHub repo: `julianariel/pokelike-companion`.
+- Pushed initial `main` commit.
+- Configured repo settings: issues enabled, wiki/projects disabled, delete branch on merge enabled.
+
+Branch protection note:
+
+- Attempted classic branch protection and repository rulesets for `main`.
+- GitHub rejected both because protected branches/rulesets for this private personal repo require GitHub Pro or a public repo.
+- See `docs/repository-settings.md` for the target settings and commands to apply once available.
+
+Verification so far:
+
+- Local `npm run build` passed.
+- Local `npm run package` produced `pokelike-companion-extension.zip`.
+- Remote `CI` workflow passed on initial push.
+- Remote `Release Extension` workflow initially failed due GitHub CLI token wiring; workflow has been patched and needs the next push to verify.

@@ -58,7 +58,8 @@ jobs:
 
       - name: Create or update rolling release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view main-latest >/dev/null 2>&1; then
             gh release edit main-latest \
