@@ -2,7 +2,7 @@
 
 ## Distribution
 
-The private distribution path is a rolling GitHub Release:
+The public distribution path is a rolling GitHub Release:
 
 - Workflow: `.github/workflows/release-main.yml`
 - Trigger: every push to `main`
@@ -24,6 +24,7 @@ Active policy for `main`:
 - Require conversation resolution.
 - Block force pushes and deletion.
 - Delete branches after merge.
+- Admin enforcement disabled so the repository owner can bypass review requirements when needed.
 
 The repo is configured to delete branches after merge, disable wiki/projects, and keep issues enabled.
 
