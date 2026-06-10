@@ -97,7 +97,7 @@ npm run package
 Every push to `main` runs:
 
 - `CI`: builds and uploads a workflow artifact.
-- `Release Extension`: builds, zips `dist/`, moves the `main-latest` tag, and replaces the rolling release asset.
+- `Release Extension`: builds, zips `dist/`, updates `main-latest`, and creates an immutable `vX.Y.Z` GitHub Release when `package.json` has a new version.
 
 Protected `main` requires pull requests, review, the `build` status check, linear history, and resolved conversations.
 
@@ -126,6 +126,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 - [Plan](docs/plan.md)
 - [Architecture](docs/architecture.md)
 - [Strategy Engine](docs/strategy-engine.md)
+- [Release Process](docs/release.md)
 - [Support Setup](docs/support.md)
 - [Repository Settings](docs/repository-settings.md)
 - [Status](docs/status.md)

@@ -11,6 +11,15 @@ The public distribution path is a rolling GitHub Release:
 
 Users can download the zip, extract it, and load the extracted folder as an unpacked Chrome extension.
 
+Versioned releases are also created from `package.json`:
+
+- Tag: `vX.Y.Z`
+- Trigger: first `main` push where that version does not already have a release
+- Notes: generated from commit history since the previous `v*` tag
+- Asset: `pokelike-companion-extension.zip`
+
+See [Release Process](release.md).
+
 ## Branch Protection
 
 Active policy for `main`:
