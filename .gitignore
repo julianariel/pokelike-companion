@@ -1,0 +1,5 @@
+node_modules/
+dist/
+pokelike-companion-extension.zip
+.DS_Store
+*.log

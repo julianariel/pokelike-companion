@@ -1,0 +1,75 @@
+name: Release Extension
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Package extension
+        run: |
+          cd dist
+          zip -r ../pokelike-companion-extension.zip .
+
+      - name: Write release notes
+        run: |
+          {
+            echo "Automated build from main."
+            echo
+            echo "- Commit: ${GITHUB_SHA}"
+            echo "- Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo
+            echo "Install by downloading \`pokelike-companion-extension.zip\`, extracting it, and loading the extracted folder in Chrome as an unpacked extension."
+          } > release-notes.md
+
+      - name: Move rolling release tag
+        run: |
+          git tag -f main-latest "${GITHUB_SHA}"
+          git push origin refs/tags/main-latest --force
+
+      - name: Create or update rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view main-latest >/dev/null 2>&1; then
+            gh release edit main-latest \
+              --title "Latest main extension build" \
+              --notes-file release-notes.md \
+              --prerelease
+          else
+            gh release create main-latest \
+              --title "Latest main extension build" \
+              --notes-file release-notes.md \
+              --target "${GITHUB_SHA}" \
+              --prerelease
+          fi
+          gh release upload main-latest pokelike-companion-extension.zip --clobber

@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Pokelike Companion",
+  "description": "Read-only strategy companion for Pokelike runs.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Open Pokelike Companion"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "index.html"
+  },
+  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "host_permissions": ["https://pokelike.xyz/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://pokelike.xyz/*"],
+      "js": ["content-script.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

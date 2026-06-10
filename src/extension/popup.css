@@ -1,0 +1,496 @@
+:root {
+  color-scheme: dark;
+  font-family:
+    "Courier New", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  background: #12151b;
+  color: #fff8e8;
+  --ink: #0e1117;
+  --panel: #f7f2d8;
+  --panel-2: #fff9df;
+  --panel-ink: #222634;
+  --frame: #2c3242;
+  --frame-light: #7d8aa6;
+  --blue: #4f8bd8;
+  --red: #d95757;
+  --green: #43a66a;
+  --gold: #d9a441;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(255, 255, 255, 0.035) 25%, transparent 25%),
+    #12151b;
+  background-size: 10px 10px;
+}
+
+button {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(61, 106, 160, 0.35), transparent 170px),
+    transparent;
+}
+
+.pixel-panel {
+  border: 2px solid var(--ink);
+  border-radius: 0;
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.25),
+    3px 3px 0 rgba(0, 0, 0, 0.45);
+}
+
+.topbar,
+.recommendation-head,
+.pokemon-row,
+.notice,
+.section-header,
+.tab,
+.hp {
+  display: flex;
+  align-items: center;
+}
+
+.topbar {
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.topbar--framed {
+  padding: 10px;
+  background: linear-gradient(180deg, #345b98, #263d69);
+  color: #fff8e8;
+}
+
+.eyebrow {
+  color: #ffd565;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #111;
+}
+
+h1 {
+  margin: 2px 0 0;
+  font-size: 22px;
+  line-height: 1.05;
+  text-shadow: 2px 2px 0 #111;
+}
+
+.icon-button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #111;
+  border-radius: 0;
+  color: #111;
+  background: #fff3b0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.stat-tile {
+  min-width: 0;
+  padding: 8px;
+  border: 2px solid var(--ink);
+  background: var(--panel);
+  color: var(--panel-ink);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.stat-tile span,
+.panel-title,
+.pokemon-meta,
+.muted {
+  color: #59606f;
+}
+
+.stat-tile span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.stat-tile strong {
+  display: block;
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabbar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  margin-bottom: 12px;
+  background: #232838;
+}
+
+.live-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  margin-bottom: 10px;
+  background: #1f2635;
+  color: #f8efd0;
+}
+
+.live-row span {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.live-toggle {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 4px 7px;
+  border: 2px solid #111;
+  border-radius: 0;
+  color: #fff8e8;
+  background: #697080;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.live-toggle--on {
+  color: #111;
+  background: #77d07a;
+}
+
+.tab {
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 5px;
+  border: 2px solid #111;
+  border-radius: 0;
+  color: #f8efd0;
+  background: #394154;
+  cursor: pointer;
+}
+
+.tab span {
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab--active {
+  color: #151515;
+  background: #ffd565;
+}
+
+.panel {
+  margin-top: 12px;
+}
+
+.section-header {
+  gap: 5px;
+  margin: 0 0 7px;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #d9e7ff;
+  text-shadow: 1px 1px 0 #111;
+}
+
+.info-icon {
+  width: 17px;
+  height: 17px;
+  display: inline-grid;
+  place-items: center;
+  color: #fff3b0;
+  cursor: help;
+}
+
+.recommendation-list,
+.team-list,
+.guide-list,
+.type-matchups {
+  display: grid;
+  gap: 8px;
+}
+
+.recommendation {
+  padding: 10px;
+  border-left-width: 7px;
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.recommendation--good {
+  border-left-color: var(--green);
+}
+
+.recommendation--info {
+  border-left-color: var(--blue);
+}
+
+.recommendation--warning {
+  border-left-color: var(--gold);
+}
+
+.recommendation--danger {
+  border-left-color: var(--red);
+}
+
+.recommendation-head {
+  gap: 7px;
+  margin-bottom: 6px;
+}
+
+.recommendation h3,
+.guide-card h3,
+.matchup-card h3 {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.25;
+  color: #1b2231;
+}
+
+.recommendation p,
+.recommendation li,
+.empty,
+.loading,
+.notice,
+.guide-card li {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.recommendation p {
+  margin: 0 0 7px;
+  color: #303747;
+}
+
+.recommendation ul,
+.guide-card ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #3f4655;
+}
+
+.pokemon-row {
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 60px;
+  padding: 9px;
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.pokemon-main {
+  min-width: 0;
+}
+
+.pokemon-name {
+  max-width: 240px;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pokemon-meta {
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.hp {
+  flex: 0 0 auto;
+  gap: 3px;
+  color: #21693c;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.hp--low {
+  color: #a52828;
+}
+
+.notice {
+  gap: 8px;
+  margin: 10px 0;
+  padding: 10px;
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.notice--warning {
+  background: #fff1ba;
+}
+
+.trait-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 8px;
+}
+
+.trait-chip {
+  min-width: 0;
+  padding: 8px;
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.trait-chip--active {
+  background: #dff3d5;
+}
+
+.trait-chip strong,
+.trait-chip span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trait-chip strong {
+  font-size: 12px;
+}
+
+.trait-chip span {
+  margin-top: 3px;
+  color: #56606e;
+  font-size: 11px;
+}
+
+.type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.type-pill,
+.type-button {
+  border: 2px solid rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.type-pill {
+  padding: 4px 5px;
+}
+
+.type-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding: 8px;
+  background: var(--panel);
+}
+
+.type-button {
+  min-height: 28px;
+  padding: 5px 3px;
+  cursor: pointer;
+  opacity: 0.74;
+}
+
+.type-button--active {
+  opacity: 1;
+  outline: 3px solid #fff3b0;
+  outline-offset: -4px;
+}
+
+.type-normal { background: #9099a1; }
+.type-fire { background: #ff6b35; }
+.type-water { background: #4d90d5; }
+.type-electric { background: #f3d23b; color: #1b2231; text-shadow: none; }
+.type-grass { background: #63bb5b; }
+.type-ice { background: #74cec0; color: #1b2231; text-shadow: none; }
+.type-fighting { background: #ce4069; }
+.type-poison { background: #ab6ac8; }
+.type-ground { background: #d97746; }
+.type-flying { background: #8fa8dd; }
+.type-psychic { background: #f97176; }
+.type-bug { background: #90c12c; }
+.type-rock { background: #c7b78b; color: #1b2231; text-shadow: none; }
+.type-ghost { background: #5269ac; }
+.type-dragon { background: #0a6dc4; }
+.type-dark { background: #5a5366; }
+.type-steel { background: #5a8ea1; }
+.type-fairy { background: #ec8fe6; }
+
+.matchup-card,
+.guide-card {
+  padding: 10px;
+  background: var(--panel);
+  color: var(--panel-ink);
+}
+
+.matchup-card h3,
+.guide-card h3 {
+  margin-bottom: 7px;
+}
+
+.matchup-card--good {
+  background: #dff3d5;
+}
+
+.matchup-card--warn {
+  background: #fff1ba;
+}
+
+.matchup-card--danger {
+  background: #ffd1d1;
+}
+
+.empty,
+.loading {
+  padding: 12px;
+  background: var(--panel);
+  color: #505968;
+}
