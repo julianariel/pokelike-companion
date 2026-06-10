@@ -19,7 +19,7 @@ It watches your live run, scores your next choices, and explains the route like 
 - Scores Battle Tower traits, including type-pair tiers and shiny double-counts.
 - Ranks action screens such as catches, items, swaps, trades, stat buffs, and Elite prep.
 - Includes a type chart and compact strategy guide.
-- Keeps a local learning log of recommendation samples and detected win/loss outcomes.
+- Keeps a local learning log of recommendation samples and detected win/loss outcomes, with JSON export for issue reports.
 
 ## Install
 
@@ -60,6 +60,8 @@ See [Support Setup](docs/support.md) for the recommended donation stack and roll
 ## Learning From Runs
 
 The first learning layer is local-only. The extension records deduplicated recommendation states and detected win/loss screens in Chrome extension storage. That gives the project a base for future tuning without sending gameplay data anywhere.
+
+The Advisor tab can export that local history as JSON or clear it at any time.
 
 Planned strategy upgrades:
 
@@ -104,6 +106,7 @@ Protected `main` requires pull requests, review, the `build` status check, linea
 - The extension reads Pokelike state from the active `pokelike.xyz` tab.
 - The companion does not automate gameplay.
 - Learning history is stored locally in Chrome extension storage.
+- Learning history can be exported manually as JSON for bug reports or strategy tuning.
 - No donation, wallet, or payment information is collected by the extension.
 
 ## Contributing

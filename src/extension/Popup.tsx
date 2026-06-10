@@ -5,6 +5,7 @@ import {
   CircleHelp,
   Compass,
   Crosshair,
+  Download,
   HeartPulse,
   Map as MapIcon,
   RefreshCw,
@@ -13,6 +14,7 @@ import {
   Sparkles,
   Swords,
   Table2,
+  Trash2,
   Users,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -21,7 +23,7 @@ import { recommend } from '../core/strategy';
 import { POKEMON_TYPES, summarizeAttackType, type PokemonType } from '../core/typeChart';
 import type { GameSnapshot, RawPokelikeState, Recommendation } from '../core/types';
 import { readPokelikeStateFromActiveTab } from './chromeState';
-import { getLearningStats, recordLearningSnapshot, type LearningStats } from './learningStore';
+import { clearLearningEvents, getLearningEvents, getLearningStats, recordLearningSnapshot, type LearningStats } from './learningStore';
 import './popup.css';
 
 type LoadState =
@@ -278,13 +280,41 @@ function Recommendations({
   );
 }
 
-function LearningPanel({ stats }: { stats: LearningStats | null }) {
+function downloadJson(filename: string, data: unknown): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function LearningPanel({
+  stats,
+  onExport,
+  onClear,
+}: {
+  stats: LearningStats | null;
+  onExport: () => void;
+  onClear: () => void;
+}) {
   if (!stats) {
     return <div className="empty pixel-panel">Learning log is warming up.</div>;
   }
 
   return (
     <div className="learning-panel pixel-panel">
+      <div className="learning-actions">
+        <button className="mini-tool-button" type="button" onClick={onExport} title="Export local learning history as JSON">
+          <Download size={13} />
+          Export
+        </button>
+        <button className="mini-tool-button mini-tool-button--danger" type="button" onClick={onClear} title="Clear local learning history">
+          <Trash2 size={13} />
+          Clear
+        </button>
+      </div>
       <div className="learning-grid">
         <StatTile label="Samples" value={stats.samples} title="Deduplicated recommendation states saved locally." />
         <StatTile label="Outcomes" value={stats.outcomes} title="Detected win/loss screens saved locally." />
@@ -343,6 +373,8 @@ function AdvisorTab({
   mapPlanRecommendations,
   alertRecommendations,
   learningStats,
+  onExportLearning,
+  onClearLearning,
 }: {
   snapshot: GameSnapshot;
   actionRecommendations: Recommendation[];
@@ -350,6 +382,8 @@ function AdvisorTab({
   mapPlanRecommendations: Recommendation[];
   alertRecommendations: Recommendation[];
   learningStats: LearningStats | null;
+  onExportLearning: () => void;
+  onClearLearning: () => void;
 }) {
   return (
     <>
@@ -398,7 +432,7 @@ function AdvisorTab({
           title="Learning Log"
           help="Local history of recommendation states and detected run outcomes. This is the base for future win-rate tuning."
         />
-        <LearningPanel stats={learningStats} />
+        <LearningPanel stats={learningStats} onExport={onExportLearning} onClear={onClearLearning} />
       </section>
     </>
   );
@@ -555,6 +589,19 @@ export function Popup() {
     };
   }, [snapshot, recommendations]);
 
+  async function handleExportLearning() {
+    const events = await getLearningEvents();
+    downloadJson(`pokelike-companion-learning-${new Date().toISOString().slice(0, 10)}.json`, {
+      exportedAt: new Date().toISOString(),
+      eventCount: events.length,
+      events,
+    });
+  }
+
+  async function handleClearLearning() {
+    setLearningStats(await clearLearningEvents());
+  }
+
   return (
     <main className="shell">
       <header className="topbar pixel-panel topbar--framed">
@@ -622,6 +669,8 @@ export function Popup() {
           actionRecommendations={actionRecommendations}
           alertRecommendations={alertRecommendations}
           learningStats={learningStats}
+          onExportLearning={handleExportLearning}
+          onClearLearning={handleClearLearning}
         />
       )}
       {snapshot && activeTab === 'team' && <TeamTab snapshot={snapshot} traitRecommendations={traitRecommendations} />}

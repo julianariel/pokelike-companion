@@ -216,6 +216,7 @@ Status: in review
   - `julianariel.eth` as an optional EVM-only crypto fallback with safety rules.
 - Added a local-only learning log using Chrome extension storage.
 - Added Advisor tab learning stats for recommendation samples, detected outcomes, win rate, and frequent next-click recommendations.
+- Added JSON export and clear controls for local learning history.
 - Documented the strategy path: deterministic scoring, local outcomes, battle simulation, then opt-in LLM explanations.
 
 ### Verification

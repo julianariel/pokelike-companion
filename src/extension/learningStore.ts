@@ -148,6 +148,16 @@ export async function getLearningStats(): Promise<LearningStats> {
   return summarizeLearningEvents(events);
 }
 
+export async function getLearningEvents(): Promise<LearningEvent[]> {
+  return readValue<LearningEvent[]>(EVENTS_KEY, []);
+}
+
+export async function clearLearningEvents(): Promise<LearningStats> {
+  await writeValue(EVENTS_KEY, []);
+  await writeValue(LAST_SIGNATURE_KEY, null);
+  return summarizeLearningEvents([]);
+}
+
 export async function recordLearningSnapshot(snapshot: GameSnapshot, recommendations: Recommendation[]): Promise<LearningStats> {
   if (snapshot.source === 'empty') return getLearningStats();
 

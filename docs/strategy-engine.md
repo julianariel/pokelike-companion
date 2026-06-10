@@ -118,6 +118,8 @@ Captured events:
 
 This is intentionally small and private. It gives the companion enough historical context to calculate local win-rate summaries before any remote analytics or account system exists.
 
+Players can export the local learning log as JSON from the Advisor tab when they want to share evidence in an issue. They can also clear the local log without affecting Pokelike data.
+
 Near-term tuning path:
 
 1. Count outcomes by mode and route node type.
