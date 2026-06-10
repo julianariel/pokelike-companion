@@ -203,3 +203,24 @@ Status: complete
 
 - `npm run build` passed.
 - Local Vite smoke test loaded the companion UI with no browser console errors.
+
+### Milestone: Public README, Support Rails, And Local Learning
+
+Status: in review
+
+- Repository was converted to public and `main` branch protection was applied successfully.
+- Reworked README into a public-facing project page with badges, install flow, feature pitch, support section, privacy notes, and contribution hooks.
+- Added support setup guidance:
+  - Cafecito for creator/community support.
+  - Mercado Pago for payment links or recurring support.
+  - `julianariel.eth` as an optional EVM-only crypto fallback with safety rules.
+- Added a local-only learning log using Chrome extension storage.
+- Added Advisor tab learning stats for recommendation samples, detected outcomes, win rate, and frequent next-click recommendations.
+- Added JSON export and clear controls for local learning history.
+- Documented the strategy path: deterministic scoring, local outcomes, battle simulation, then opt-in LLM explanations.
+
+### Verification
+
+- `npm run build` passed.
+- `npm run package` passed.
+- Generated `dist/manifest.json` includes the `storage` permission.

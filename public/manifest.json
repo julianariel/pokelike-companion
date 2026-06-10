@@ -12,7 +12,7 @@
   "side_panel": {
     "default_path": "index.html"
   },
-  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "permissions": ["activeTab", "scripting", "sidePanel", "storage"],
   "host_permissions": ["https://pokelike.xyz/*"],
   "content_scripts": [
     {

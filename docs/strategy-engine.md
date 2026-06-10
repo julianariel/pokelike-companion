@@ -102,3 +102,48 @@ The next strategy upgrade should mirror Pokelike's battle engine enough to estim
 - catch/swap expected value
 
 Simulation should initially run multiple deterministic seeds against the current state rather than trying to predict a single exact RNG path.
+
+## Learning From Outcomes
+
+The extension now keeps a local-only learning log in Chrome extension storage.
+
+Captured events:
+
+- deduplicated recommendation states
+- current mode and map
+- next-click recommendation
+- visible route labels
+- team size and average HP
+- detected win/loss screens when Pokelike exposes them
+
+This is intentionally small and private. It gives the companion enough historical context to calculate local win-rate summaries before any remote analytics or account system exists.
+
+Players can export the local learning log as JSON from the Advisor tab when they want to share evidence in an issue. They can also clear the local log without affecting Pokelike data.
+
+Near-term tuning path:
+
+1. Count outcomes by mode and route node type.
+2. Compare recommended routes against later win/loss outcomes.
+3. Lower scores for repeated high-risk decisions that correlate with losses.
+4. Raise scores for mode-specific decisions that repeatedly precede clears.
+5. Export anonymized debug bundles only when a player explicitly shares them in an issue.
+
+## LLM Layer
+
+An LLM should be an optional explainer/planner layer after deterministic scoring and simulation are stronger.
+
+Good use cases:
+
+- explain why two close routes differ
+- summarize best-case, expected-case, and worst-case scenarios after a map is generated
+- turn local stats into readable advice
+- help contributors inspect bad recommendation reports
+
+Avoid:
+
+- sending run state to a hosted model by default
+- letting the LLM override deterministic safety checks
+- requiring an API key for the core extension
+- making gameplay decisions opaque or unreproducible
+
+The recommended architecture is deterministic scorer first, local outcome data second, battle simulator third, opt-in LLM explanation fourth.
